@@ -14,14 +14,7 @@ namespace HundredSDK.Authentication.BasicTokens
         public Func<string, string, Task<ClaimsIdentity>> IdentityResolver { get; set; }
 
         private readonly IConfiguration configuration;
-
-        private const string baseSectionName = "HundredTokenAuthentication";
-        private const string secretKeySectionName = baseSectionName + ":SecretKey";
-        private const string issuerSectioName = baseSectionName + ":Issuer";
-        private const string audienceSectioName = baseSectionName + ":Audience";
-        private const string tokenPathSectionName = baseSectionName + ":TokenPath";
-        private const string cookieSectionName = baseSectionName + ":CookieName";
-
+        
         public BasicTokenProvider(IConfiguration configuration) {
             this.configuration = configuration;            
         }
@@ -61,9 +54,9 @@ namespace HundredSDK.Authentication.BasicTokens
 
             var hundredTokenProviderOptions = new BasicTokenProviderOptions
             {
-                Path = configuration.GetSection(tokenPathSectionName).Value,
-                Audience = configuration.GetSection(audienceSectioName).Value,
-                Issuer = configuration.GetSection(issuerSectioName).Value,
+                Path = configuration.GetSection(BasicTokenProviderConfig.TokenPathSectionName).Value,
+                Audience = configuration.GetSection(BasicTokenProviderConfig.AudienceSectioName).Value,
+                Issuer = configuration.GetSection(BasicTokenProviderConfig.IssuerSectioName).Value,
                 SigningCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256)
                 //IdentityResolver = identityResolver
             };
@@ -76,7 +69,7 @@ namespace HundredSDK.Authentication.BasicTokens
             //Obtener secretKey
             var signingKey =
                 new SymmetricSecurityKey(
-                    Encoding.ASCII.GetBytes(this.configuration.GetSection(secretKeySectionName).Value));
+                    Encoding.ASCII.GetBytes(this.configuration.GetSection(BasicTokenProviderConfig.SecretKeySectionName).Value));
 
             return signingKey;
         }
@@ -90,9 +83,9 @@ namespace HundredSDK.Authentication.BasicTokens
                 IssuerSigningKey = signingKey,
                 // Validate the JWT Issuer (iss) claim
                 ValidateIssuer = true,
-                ValidIssuer = this.configuration.GetSection(issuerSectioName).Value,
+                ValidIssuer = this.configuration.GetSection(BasicTokenProviderConfig.IssuerSectioName).Value,
                 ValidateAudience = true,
-                ValidAudience = this.configuration.GetSection(audienceSectioName).Value,
+                ValidAudience = this.configuration.GetSection(BasicTokenProviderConfig.AudienceSectioName).Value,
                 ValidateLifetime = true,
                 // If you want to allow a certain amount of clock drift, set that here:
                 ClockSkew = TimeSpan.Zero

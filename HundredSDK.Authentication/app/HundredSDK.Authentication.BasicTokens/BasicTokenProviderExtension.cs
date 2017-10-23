@@ -15,16 +15,11 @@ namespace HundredSDK.Authentication.BasicTokens
 {
     public static class BasicTokenProviderExtension
     {
-        private static readonly string baseSectionName= "HundredTokenAuthentication";
-        private static readonly string secretKeySectionName = baseSectionName + ":SecretKey";
-        private static readonly string issuerSectioName = baseSectionName + ":Issuer";
-        private static readonly string audienceSectioName = baseSectionName + ":Audience";
-        private static readonly string tokenPathSectionName = baseSectionName + ":TokenPath";
-        private static readonly string cookieSectionName = baseSectionName + ":CookieName";
-
+        
         public static IApplicationBuilder UseHundredTokenProvider(
             this IApplicationBuilder builder, IConfiguration configuration, IMemoryCache cache)
-        {           
+        {
+            ValidarConfiguracion(configuration);
             BasicTokenProvider tokenProvider = new BasicTokenProvider(configuration);
             return builder.UseMiddleware<BasicTokenProviderMiddleware>(configuration, tokenProvider, cache);
         }
@@ -34,12 +29,14 @@ namespace HundredSDK.Authentication.BasicTokens
             this IApplicationBuilder builder, IConfiguration configuration,
             Func<string, string, Task<ClaimsIdentity>> identityResolver)
         {
+            ValidarConfiguracion(configuration);
             BasicTokenProvider tokenProvider = new BasicTokenProvider(configuration);
             tokenProvider.IdentityResolver = identityResolver;
             return builder.UseMiddleware<BasicTokenProviderMiddleware>(configuration, tokenProvider);
         }
 
         public static void AddAuthenticationHundredBasicToken(this IServiceCollection services, IConfiguration configuration) {
+            ValidarConfiguracion(configuration);
 
             BasicTokenProvider tokenProvider = new BasicTokenProvider(configuration);
 
@@ -57,7 +54,7 @@ namespace HundredSDK.Authentication.BasicTokens
             })
             .AddJwtBearer(options => { options.TokenValidationParameters = tokenValidationParameters; })
             .AddCookie(options => {
-                options.Cookie.Name = configuration.GetSection(cookieSectionName).Value;
+                options.Cookie.Name = configuration.GetSection(BasicTokenProviderConfig.CookieSectionName).Value;
                 options.TicketDataFormat = new JwtDataFormat(
                     SecurityAlgorithms.HmacSha256, tokenValidationParameters);
             });
@@ -65,6 +62,13 @@ namespace HundredSDK.Authentication.BasicTokens
             //Agregar Memory Caching
             services.AddMemoryCache();
             
+        }
+
+        private static void ValidarConfiguracion(IConfiguration configuration) {
+            var seccion = configuration.GetSection(BasicTokenProviderConfig.BaseSectionName).Value;
+            if (seccion == null) {
+                throw new ApplicationException("No existe configuración. Revisar la sección 'HundredTokenAuthentication' en AppSettings.json or web.config");
+            }
         }
         
     }
